@@ -6,12 +6,14 @@ interface IDSCNFTName {
 
     event SetMixForChanging(uint256 _mix);
     event SetMixForDeleting(uint256 _mix);
+    event SetBankAddress(address _bank);
 
     event Set(address indexed nft, uint256 indexed mateId, address indexed owner, string name);
     event Remove(address indexed nft, uint256 indexed mateId, address indexed owner);
 
     function V1() view external returns (address);
     function mix() view external returns (IKIP17);
+    function bank() view external returns (address);
     function mixForChanging() view external returns (uint256);
     function mixForDeleting() view external returns (uint256);
 

@@ -11,9 +11,12 @@ contract DSCNFTName is Ownable, IDSCNFTName {
 
     address public constant V1 = 0x12C591fCd89B83704541B1Eac6b4aA18063A6954;
     IMix public mix;
+    address public bank;
 
-    constructor(IMix _mix) public {
+
+    constructor(IMix _mix, address _bank) public {
         mix = _mix;
+        bank = _bank;
     }
 
     uint256 public mixForChanging = 100 * 1e18;
@@ -32,6 +35,10 @@ contract DSCNFTName is Ownable, IDSCNFTName {
         mixForDeleting = _mix;
         emit SetMixForDeleting(_mix);
     }
+    function setBankAddress(address _bank) onlyOwner external {
+        bank = _bank;
+        emit SetBankAddress(_bank);
+    }
 
     modifier onlyHolder(address nft, uint256 mateId) {
         require(IKIP17(nft).ownerOf(mateId) == msg.sender);
@@ -47,7 +54,7 @@ contract DSCNFTName is Ownable, IDSCNFTName {
 
         if (named[nft][mateId] == true) {
             _exists[names[nft][mateId]] = false;
-            mix.burnFrom(msg.sender, mixForChanging);
+            mix.transferFrom(msg.sender, bank, mixForChanging);
         } else {
             named[nft][mateId] = true;
         }
@@ -79,7 +86,7 @@ contract DSCNFTName is Ownable, IDSCNFTName {
         delete names[nft][mateId];
         delete named[nft][mateId];
 
-        mix.burnFrom(msg.sender, mixForDeleting);
+        mix.transferFrom(msg.sender, bank, mixForDeleting);
 
         emit Remove(nft, mateId, msg.sender);
     }
