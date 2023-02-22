@@ -300,7 +300,7 @@ library SafeMath {
     }
 }
 
-interface IDSCNFTName {
+interface IDSCNFTNameV3 {
 
     event Set(address indexed nft, uint256 indexed mateId, address indexed owner, string name);
     event Remove(address indexed nft, uint256 indexed mateId, address indexed owner);
@@ -412,7 +412,7 @@ contract IKIP7 is IKIP13 {
     event Approval(address indexed owner, address indexed spender, uint256 value);
 }
 
-contract DSCNFTName is Ownable, IDSCNFTName {
+contract DSCNFTNameV3 is Ownable, IDSCNFTNameV3 {
     using SafeMath for uint256;
 
      address public constant V2 = 0xd095c72B42547c7097089E36908d60d13347823a;
