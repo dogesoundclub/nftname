@@ -1,5 +1,6 @@
 pragma solidity ^0.5.6;
 
+
 /**
  * @dev Interface of the KIP-13 standard, as defined in the
  * [KIP-13](http://kips.klaytn.com/KIPs/kip-13-interface_query_standard).
@@ -299,12 +300,18 @@ library SafeMath {
     }
 }
 
-interface IDSCNFTNameV3 {
+interface IDSCNFTName {
+
+    event SetMixForChanging(uint256 _mix);
+    event SetMixForDeleting(uint256 _mix);
 
     event Set(address indexed nft, uint256 indexed mateId, address indexed owner, string name);
     event Remove(address indexed nft, uint256 indexed mateId, address indexed owner);
 
-    function V2() view external returns (address);
+    function V1() view external returns (address);
+    function mix() view external returns (IKIP17);
+    function mixForChanging() view external returns (uint256);
+    function mixForDeleting() view external returns (uint256);
 
     function names(address nft, uint256 mateId) view external returns (string memory name);
     function named(address nft, uint256 mateId) view external returns (bool);
@@ -411,14 +418,51 @@ contract IKIP7 is IKIP13 {
     event Approval(address indexed owner, address indexed spender, uint256 value);
 }
 
-contract DSCNFTNameV3 is Ownable, IDSCNFTNameV3 {
+interface IMix {
+
+    event Transfer(address indexed from, address indexed to, uint256 value);
+    event Approval(address indexed owner, address indexed spender, uint256 value);
+
+    function totalSupply() external view returns (uint256);
+    function balanceOf(address account) external view returns (uint256);
+    
+    function allowance(address owner, address spender) external view returns (uint256);
+    function approve(address spender, uint256 amount) external returns (bool);
+    
+    function transfer(address recipient, uint256 amount) external returns (bool);
+    function transferFrom(address sender, address recipient, uint256 amount) external returns (bool);
+    
+    function mint(address to, uint256 amount) external;
+    function burn(uint256 amount) external;
+    function burnFrom(address account, uint256 amount) external;
+}
+
+contract DSCNFTName is Ownable, IDSCNFTName {
     using SafeMath for uint256;
 
-     address public constant V2 = 0xd095c72B42547c7097089E36908d60d13347823a;
+    address public constant V1 = 0x12C591fCd89B83704541B1Eac6b4aA18063A6954;
+    IMix public mix;
+
+    constructor(IMix _mix) public {
+        mix = _mix;
+    }
+
+    uint256 public mixForChanging = 100 * 1e18;
+    uint256 public mixForDeleting = 200 * 1e18;
 
     mapping(address => mapping(uint256 => string)) public names;
     mapping(address => mapping(uint256 => bool)) public named;
     mapping(string => bool) public _exists;
+
+    function setMixForChanging(uint256 _mix) onlyOwner external {
+        mixForChanging = _mix;
+        emit SetMixForChanging(_mix);
+    }
+
+    function setMixForDeleting(uint256 _mix) onlyOwner external {
+        mixForDeleting = _mix;
+        emit SetMixForDeleting(_mix);
+    }
 
     modifier onlyHolder(address nft, uint256 mateId) {
         require(IKIP17(nft).ownerOf(mateId) == msg.sender);
@@ -434,6 +478,7 @@ contract DSCNFTNameV3 is Ownable, IDSCNFTNameV3 {
 
         if (named[nft][mateId] == true) {
             _exists[names[nft][mateId]] = false;
+            mix.burnFrom(msg.sender, mixForChanging);
         } else {
             named[nft][mateId] = true;
         }
@@ -444,7 +489,7 @@ contract DSCNFTNameV3 is Ownable, IDSCNFTNameV3 {
         emit Set(nft, mateId, msg.sender, name);
     }
 
-    function importFromV2(address nft, uint256 mateId, string calldata name) onlyOwner external {
+    function importFromV1(address nft, uint256 mateId, string calldata name) onlyOwner external {
         require(_exists[name] != true);
 
         if (named[nft][mateId] == true) {
@@ -464,6 +509,8 @@ contract DSCNFTNameV3 is Ownable, IDSCNFTNameV3 {
         delete _exists[names[nft][mateId]];
         delete names[nft][mateId];
         delete named[nft][mateId];
+
+        mix.burnFrom(msg.sender, mixForDeleting);
 
         emit Remove(nft, mateId, msg.sender);
     }
