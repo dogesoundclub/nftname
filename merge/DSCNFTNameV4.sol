@@ -441,6 +441,12 @@ contract DSCNFTName is Ownable, IDSCNFTName {
     using SafeMath for uint256;
 
     address public constant V1 = 0x12C591fCd89B83704541B1Eac6b4aA18063A6954;
+    address public foundation = owner();
+
+    function setFoundation(address _foundation) external onlyOwner {
+        foundation = _foundation;
+    }
+
     IMix public mix;
 
     constructor(IMix _mix) public {
@@ -478,7 +484,8 @@ contract DSCNFTName is Ownable, IDSCNFTName {
 
         if (named[nft][mateId] == true) {
             _exists[names[nft][mateId]] = false;
-            mix.burnFrom(msg.sender, mixForChanging);
+            mix.safeTransferFrom(msg.sender, foundation, mixForChanging);
+            // mix.burnFrom(msg.sender, mixForChanging);
         } else {
             named[nft][mateId] = true;
         }
@@ -510,7 +517,8 @@ contract DSCNFTName is Ownable, IDSCNFTName {
         delete names[nft][mateId];
         delete named[nft][mateId];
 
-        mix.burnFrom(msg.sender, mixForDeleting);
+        mix.safeTransferFrom(msg.sender, foundation, mixForDeleting);
+        // mix.burnFrom(msg.sender, mixForDeleting);
 
         emit Remove(nft, mateId, msg.sender);
     }
