@@ -1,3 +1,5 @@
+// Burn function in V3 has been deleted. Holder only pay gas fee can change or delete name.
+
 pragma solidity ^0.5.6;
 
 
