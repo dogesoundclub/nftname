@@ -1,4 +1,6 @@
 # nftname
+Using this contract, NFT holders can name NFT on chain.
+This work started from the idea that who feels affection to NFT they have tends to wanna name their NFT unique, different with metadata.
 
 ## Example 
 Mainnet
